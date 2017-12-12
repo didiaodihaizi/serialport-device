@@ -19,8 +19,6 @@
                 </FormItem>
               </Form>
               <div style="text-align: right; padding-right: 20px;">
-                <Button>连接</Button>
-                <Button type="error">断开</Button>
               </div>
             </MenuGroup>
           </Menu>
@@ -67,6 +65,13 @@
           {
               title: 'ADC合格',
               key: 'ADC_qualified',
+              render: (h, params) => {
+                return h('div', {
+                          attrs: {
+                            class: params.row.ADC_qualified === '合格' ? 'pass' : 'nopass'
+                          }
+                        }, [])
+              }
  
           },
           {
@@ -75,13 +80,20 @@
  
           },
           {
-              title: '信号',
+              title: '信号量',
               key: 'signal',
  
           },
           {
-              title: '信号源',
-              key: 'Mac1',
+              title: '信号合格',
+              key: 'signal_qualified',
+              render: (h, params) => {
+                return h('div', {
+                          attrs: {
+                            class: params.row.signal_qualified === '合格' ? 'pass' : 'nopass'
+                          }
+                        }, [])
+              }
  
           },
         ],
@@ -93,10 +105,10 @@
       for(let i = 0; i< 100; i++){
         this.data2.push({
               ADC_value: 'John Brown',
-              ADC_qualified: 18,
+              ADC_qualified: '合格',
               Mac: 'New York No. 1 Lake Park',
               signal: '2016-10-03',
-              Mac1: '111'
+              signal_qualified: '不合格'
           },)
       }
     },
@@ -127,7 +139,7 @@
       exportData () {
         
         this.$refs.deviceTable.exportCsv({
-            filename: 'The original data'
+            filename: 'The original data',
         });
       }
     }
@@ -150,5 +162,17 @@
   .right {
     padding:10px;
     flex: 1;
+  }
+  .pass{
+    width: 10px;
+    height: 10px;
+    background-color: #09BB07;
+    border-radius: 50%;
+  }
+  .nopass{
+    width: 10px;
+    height: 10px;
+    background-color: #FF0000;
+    border-radius: 50%;
   }
 </style>
