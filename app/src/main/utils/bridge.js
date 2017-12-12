@@ -113,7 +113,7 @@ export default {
       let instance = instances.get(address)
       if (!instance) {
         event.sender.send(`${id}-device-connect-response`, new Error('Not Found'))
-        return;
+        return
       }
 
       if (!instance.isConnected()) {
@@ -134,7 +134,7 @@ export default {
       let instance = instances.get(address)
       if (!instance) {
         event.sender.send(`${id}-device-disconnect-response`, new Error('Not Found'))
-        return;
+        return
       }
 
       if (instance.isConnected()) {
@@ -170,7 +170,7 @@ export default {
 
       let cb = (data) => {
         event.sender.send(`${id}-device-on-response`, null, data)
-      };
+      }
 
       cbs.set(id, cb)
       instance.on(key, cb)
