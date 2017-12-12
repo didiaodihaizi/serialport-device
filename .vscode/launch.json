@@ -1,0 +1,88 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "name": "Debug Main Process",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+      },
+      "program": "${workspaceRoot}/app/dist/main.js",
+      "protocol": "inspector",
+      "stopOnEntry": false,
+      "args": [],
+      "preLaunchTask": "build",
+      "runtimeArgs": [
+        "--nolazy"
+      ],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/app/dist/**/*.js"
+      ],
+      "env": {
+        "BABEL_ENV": "main",
+        "NODE_ENV" : "debugging"
+      }
+    }, {
+      "name": "Debug KOA Process",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+      },
+      "program": "${workspaceRoot}/app/dist/app.js",
+      "protocol": "inspector",
+      "stopOnEntry": false,
+      "args": [],
+      "preLaunchTask": "build",
+      "runtimeArgs": [
+        "--nolazy"
+      ],
+      "env": {
+        "APP_ENV": "listen"
+      },
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/app/dist/**/*.js"
+      ]
+    }, {
+      "name": "Debug Koa Mocha",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceRoot}/node_modules/.bin/electron-mocha",
+      "protocol": "legacy",
+      "stopOnEntry": false,
+      "args": [
+        "--debug",
+        "--compilers",
+        "js:babel-core/register",
+        "--timeout",
+        "15000",
+        "${workspaceRoot}/app/test/**/*.js"
+      ],
+      "preLaunchTask": "build",
+      "runtimeArgs": [
+        "--nolazy"
+      ],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/app/dist/**/*.js"
+      ],
+      "env": {
+        "BABEL_ENV": "main"
+      }
+    }, {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach",
+      "port": 5858
+    }
+  ]
+}

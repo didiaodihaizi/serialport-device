@@ -1,6 +1,7 @@
 {
-  "name": "advanpro-port-tools",
-  "version": "0.9.0",
+  "name": "serialport-device",
+  "version": "1.0.0.rev1",
+  "productName": "sss",
   "description": "An electron-vue project",
   "main": "dist/main.js",
   "scripts": {
@@ -11,6 +12,7 @@
     "advanpro-node-device": "^1.1.18",
     "away": "^1.0.0",
     "axios": "^0.16.1",
+    "bluebird": "^3.5.1",
     "date-utils": "^1.2.21",
     "electron-mvc-ipc": "^0.1.1",
     "event-stream": "^3.3.4",

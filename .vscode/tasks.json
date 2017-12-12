@@ -1,0 +1,21 @@
+{
+  "version": "0.1.0",
+  "command": "npm",
+  "isShellCommand": true,
+  "showOutput": "always",
+  "suppressTaskName": true,
+  "tasks": [
+    {
+      "taskName": "build",
+      "args": ["run", "compile"]
+    },
+    {
+      "taskName": "pack",
+      "args": ["run", "pack:renderer"]
+    },
+    {
+      "taskName": "dev",
+      "args": ["run", "dev"]
+    }
+  ]
+}
