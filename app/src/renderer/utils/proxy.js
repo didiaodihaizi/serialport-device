@@ -41,7 +41,7 @@ class BluetoothAdapter {
   }
 
   static stop (cb = () => {}) {
-    ipcRenderer.removeListener('bluethooth-scanning-response', BluetoothAdapter.scanner)
+    ipcRenderer.removeAllListeners('bluethooth-scanning-response')
 
     return new Promise((resolve, reject) => {
       let index = id++
@@ -53,42 +53,6 @@ class BluetoothAdapter {
       })
 
       ipcRenderer.send('bluethooth-stop-request', index)
-    })
-  }
-
-  static batch (options, cb = () => {}, callback = () => {}) {
-    return new Promise((resolve, reject) => {
-      let index = id++
-      ipcRenderer.on(`${index}-bluethooth-batch-cb-response`, (event, address) => {
-        let proxy = new ProxyDevice(address)
-        cb(proxy)
-      })
-
-      ipcRenderer.once(`${index}-bluethooth-batch-response`, (event, error, address) => {
-        callback(error, address)
-        if (error) {
-          reject(error)
-        } else {
-          resolve(address)
-        }
-      })
-    })
-  }
-
-  static create (options, cb = () => {}) {
-    return new Promise((resolve, reject) => {
-      let index = id++
-      ipcRenderer.once(`${index}-bluethooth-create-response`, (event, error, address) => {
-        cb(error, error ? null : new ProxyDevice(address))
-
-        return error
-          ? reject(error)
-          : resolve(address
-            ? new ProxyDevice(address)
-            : null)
-      })
-
-      ipcRenderer.send('bluethooth-create-request', index, options)
     })
   }
 }
@@ -149,11 +113,11 @@ class ProxyDevice {
     let index = id++
     let warp = (event, error, data) => {
       cb(error, data)
-    };
+    }
 
     cbs.push({ index, cb, warp })
     ipcRenderer.on(`${index}-device-on-response`, warp)
-    
+
     ipcRenderer.send('device-on-request', index, this.address, key)
   }
 
@@ -175,109 +139,6 @@ class ProxyDevice {
       }
     })
   }
-
-  command (key, params, timeout, cb = () => {}) {
-    if (typeof (params) === 'number') {
-      timeout = params
-      params = []
-    }
-
-    if (typeof (params) === 'function') {
-      cb = params
-      params = []
-    }
-
-    if (typeof (timeout) === 'function') {
-      cb = timeout
-      timeout = 3000
-    }
-
-    if (!params) {
-      params = []
-    }
-
-    if (!timeout) {
-      timeout = 3000
-    }
-
-    return new Promise((resolve, reject) => {
-      let index = id++
-      ipcRenderer.once(`${index}-device-command-response`, (event, error, res) => {
-        cb(error, res)
-        return error
-          ? reject(error)
-          : resolve(res)
-      })
-      ipcRenderer.send('device-command-request', index, this.address, key, params, timeout)
-    })
-  }
-
-  start (params, timeout, cb = () => {}) {
-    if (typeof (params) === 'number') {
-      timeout = params
-      params = []
-    }
-
-    if (typeof (params) === 'function') {
-      cb = params
-      params = []
-    }
-
-    if (typeof (timeout) === 'function') {
-      cb = timeout
-      timeout = 3000
-    }
-
-    if (!params) {
-      params = []
-    }
-
-    if (!timeout) {
-      timeout = 3000
-    }
-
-    return new Promise((resolve, reject) => {
-      let index = id++
-      ipcRenderer.once(`${index}-device-start-response`, (event, error, res) => {
-        cb(error, res)
-        return error
-          ? reject(error)
-          : resolve(res)
-      })
-
-      ipcRenderer.send('device-start-request', index, this.address, params, timeout)
-    })
-  }
-
-  stop (cb = () => {}) {
-    return new Promise((resolve, reject) => {
-      let index = id++
-      ipcRenderer.once(`${index}-device-stop-response`, (event, error, res) => {
-        cb(error, res)
-        return error
-          ? reject(error)
-          : resolve(res)
-      })
-
-      ipcRenderer.send('device-stop-request', index, this.address)
-    })
-  }
-
-  get (key, cb = () => {}) {
-    return new Promise((resolve, reject) => {
-      let index = id++
-      ipcRenderer.once(`${index}-device-get-response`, (event, error, res) => {
-        cb(error, res)
-        return error
-          ? reject(error)
-          : resolve(res)
-      })
-
-      ipcRenderer.send('device-get-request', index, this.address, key)
-    })
-  }
-
-
 }
 
 export { AdvanproPiSerialport, BluetoothAdapter, ProxyDevice }

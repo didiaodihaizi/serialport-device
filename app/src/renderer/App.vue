@@ -44,17 +44,26 @@
 
 <script>
   import {
-    AdvanproPiSerialport
+    AdvanproPiSerialport,
+    BluetoothAdapter
   } from 'renderer/utils/proxy';
 
+  import dateUtils from 'date-utils'
+  
   export default {
     data() {
       return {
         instance: null,
         port: [],
+        qualified: [],
+        mac: '',
+        adc: 0,
+        rssi: 0,
+        adcValid: false,
+        bleValid: false,
         formItem: {
           port : '',
-          rate: '230400',
+          rate: '115200',
         },
         columns1: [
           {
@@ -114,30 +123,99 @@
     },
     methods: {
       searchPorts() {
-        AdvanproPiSerialport.scan().then(list => {
-          this.port = list
+        AdvanproPiSerialport.scan()
+        .then(ports => {
+          this.port = ports
         })
       },
-      connect(path) {
-        AdvanproPiSerialport.create({
-            path
-          })
-          .then(instance => {
-            this.instance = instance
-            console.log('created', this.instance)
-          })
-          .catch(res => {
-            this.$Message.error('串口连接失败')
-          })
+      filters(){
+        this.qualified = this.qualified.filter(ele => {
+          return new Date().getSecondsBetween(ele.date) < 30
+        })
+      },
+
+      findIndex(mac){
+        return this.qualified.findIndex(ele => ele.mac === mac)
       },
       start() {
-        
+        this.filters()
+        AdvanproPiSerialport.create({
+          path: 'COM8'
+        })
+        .then(instance => {
+          this.instance = instance
+          return this.instance.connect()
+        })
+        .then(() => { 
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {this.adcValid = false;reject(new Error('未找到设备mac地址'))},10000)
+            this.instance.on('data', (err,res) => {
+              let reg = /^&#\tmac=([0-9A-F]{12})\tadc=([0-9A-F]+)$/g
+              let input = reg.exec(res)
+              if(input && input[1] && input[2]){
+                this.adc = parseInt(input[2], 16)
+                this.mac = input[1]
+                if(this.findIndex(this.mac) > -1){
+                  reject(new Error('30S内已做过检测，请稍后再试'))
+                }
+                if(this.adc >= 30000 && this.adc < 35000){
+                  //adc合格更新UI
+                  this.adcValid = true
+                  console.log('adc合格')
+                }else{
+                  //adc不合格更新UI
+                  this.adcValid = false
+                  console.log('adc不合格')
+                }
+                resolve()
+              }
+            })
+          })
+        })
+        .then(() => {
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {this.bleValid = false;reject(new Error('未找到设备蓝牙信号'))},20000)
+            BluetoothAdapter.scan((record) => {
+              if(record.address.toUpperCase().replace(/:/g,'') === this.mac){
+                if(record.rssi >= -40){
+                  this.bleValid = true
+                  //合格更新UI
+                  console.log('蓝牙合格')
+                }else{
+                  this.bleValid = false
+                  //不合格更新UI
+                  console.log('蓝牙不合格')
+                }
+                resolve()
+              }
+            })
+          })
+        })
+        .then(() => {
+          if(this.adcValid && this.bleValid){
+            this.qualified.push({
+              mac: this.mac,
+              date: new Date()
+            })
+          }
+        })
+        .catch(err => {
+          console.log('err:', err)
+        })
       },
       stop() {
-
+        if(this.instance){
+          this.instance
+          .disconnect()
+          .then(res => {
+            return BluetoothAdapter.stop()
+          })
+          .catch(err => {
+            console.log('err:', err)
+          })
+        }
       },
       exportData () {
-        
         this.$refs.deviceTable.exportCsv({
             filename: 'The original data',
         });
