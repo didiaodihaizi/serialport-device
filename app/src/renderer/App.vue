@@ -12,11 +12,12 @@
                         <Option v-for="item in port" :value="item.comName" :key="item.comName">{{ item.comName }}</Option>
                     </Select>
                   </FormItem>
+                  <FormItem label="波特率">
+                    <Select v-model="formItem.baudRate" >
+                        <Option v-for="item in baudRate" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                    </Select>
+                  </FormItem>
                 </div>
-                <FormItem label="波特率">
-                  <Input v-model="formItem.rate">
-                  </Input>
-                </FormItem>
               </Form>
               <div style="text-align: right; padding-right: 20px;">
               </div>
@@ -24,17 +25,23 @@
           </Menu>
         </div>
       </Col>
-      <Col  class="right">
+      <Col span=20 class="right">
         <Card :dis-hover="true">
           <p slot="title" style="display: flex;">
             设备列表
             <span style="flex: 1;text-align: right;">
-              <Button type="success" @click="start">启动</Button>
-              <Button type="error" @click="stop">停止</Button>
+              <Button type="success" @click="start">检测</Button>
               <Button type="info" @click="exportData">导出</Button>
             </span>
           </p>
-          <Table border height="800" :columns="columns1" :data="data2" ref= "deviceTable"></Table>
+          <div style="position:relative">
+            <Table border height="800" :columns="columns1" :data="data2" ref= "deviceTable">
+            </Table>
+            <Spin size="large" fix v-if="spin_loading">
+                <Icon type="load-c"  class="demo-spin-icon-load"></Icon>
+                <div>解析中</div>
+            </Spin>
+          </div>
         </Card>
         
       </Col>
@@ -47,7 +54,6 @@
     AdvanproPiSerialport,
     BluetoothAdapter
   } from 'renderer/utils/proxy';
-
   import dateUtils from 'date-utils'
   
   export default {
@@ -56,6 +62,7 @@
         instance: null,
         port: [],
         qualified: [],
+        spin_loading: false,
         mac: '',
         adc: 0,
         rssi: 0,
@@ -63,8 +70,14 @@
         bleValid: false,
         formItem: {
           port : '',
-          rate: '115200',
+          baudRate: 115200,
         },
+        baudRate: [
+          {
+            value: 115200,
+            label: 115200
+          }
+        ],
         columns1: [
           {
               title: 'ADC值',
@@ -111,26 +124,28 @@
     },
     mounted() {
       this.searchPorts()
-      for(let i = 0; i< 100; i++){
-        this.data2.push({
-              ADC_value: 'John Brown',
-              ADC_qualified: '合格',
-              Mac: 'New York No. 1 Lake Park',
-              signal: '2016-10-03',
-              signal_qualified: '不合格'
-          },)
-      }
+      // for(let i = 0; i< 100; i++){
+      //   this.data2.push({
+      //         ADC_value: 'John Brown',
+      //         ADC_qualified: '合格',
+      //         Mac: 'New York No. 1 Lake Park',
+      //         signal: '2016-10-03',
+      //         signal_qualified: '不合格'
+      //     },)
+      // }
     },
     methods: {
       searchPorts() {
         AdvanproPiSerialport.scan()
         .then(ports => {
           this.port = ports
+          this.formItem.port = ports[0].comName
         })
       },
       filters(){
         this.qualified = this.qualified.filter(ele => {
-          return new Date().getSecondsBetween(ele.date) < 30
+          console.log(new Date().getSecondsBetween(ele.date))
+          return new Date().getSecondsBetween(ele.date) > -30
         })
       },
 
@@ -138,9 +153,17 @@
         return this.qualified.findIndex(ele => ele.mac === mac)
       },
       start() {
+        let testResult = {
+              ADC_value: '',
+              ADC_qualified: '',
+              Mac: '',
+              signal: '',
+              signal_qualified: ''
+          }
+          this.spin_loading = true
         this.filters()
         AdvanproPiSerialport.create({
-          path: 'COM8'
+          path: this.formItem.port
         })
         .then(instance => {
           this.instance = instance
@@ -154,18 +177,18 @@
               let input = reg.exec(res)
               if(input && input[1] && input[2]){
                 this.adc = parseInt(input[2], 16)
-                this.mac = input[1]
+                this.mac = this.insert_flg(input[1],':',2)
+                testResult.ADC_value = this.adc
+                testResult.Mac = this.mac
                 if(this.findIndex(this.mac) > -1){
                   reject(new Error('30S内已做过检测，请稍后再试'))
                 }
                 if(this.adc >= 30000 && this.adc < 35000){
                   //adc合格更新UI
-                  this.adcValid = true
-                  console.log('adc合格')
+                  testResult.ADC_qualified = '合格'
                 }else{
                   //adc不合格更新UI
-                  this.adcValid = false
-                  console.log('adc不合格')
+                  testResult.ADC_qualified = '不合格'
                 }
                 resolve()
               }
@@ -176,14 +199,16 @@
           return new Promise((resolve, reject) => {
             setTimeout(() => {this.bleValid = false;reject(new Error('未找到设备蓝牙信号'))},20000)
             BluetoothAdapter.scan((record) => {
-              if(record.address.toUpperCase().replace(/:/g,'') === this.mac){
+              console.log(record)
+              testResult.signal = record.rssi
+              if(record.address.toUpperCase() === this.mac){
                 if(record.rssi >= -40){
-                  this.bleValid = true
                   //合格更新UI
+                   testResult.signal_qualified = '合格'
                   console.log('蓝牙合格')
                 }else{
-                  this.bleValid = false
                   //不合格更新UI
+                   testResult.signal_qualified = '不合格'
                   console.log('蓝牙不合格')
                 }
                 resolve()
@@ -192,15 +217,20 @@
           })
         })
         .then(() => {
-          if(this.adcValid && this.bleValid){
-            this.qualified.push({
-              mac: this.mac,
-              date: new Date()
-            })
-          }
+          this.data2.push(testResult)
+          this.stop()
+          this.spin_loading = false
+          this.qualified.push({
+            mac: this.mac,
+            date: new Date()
+          })
+          console.log(this.qualified)
         })
         .catch(err => {
-          console.log('err:', err)
+          this.$Message.error(err.toString())
+          this.spin_loading = false
+          this.stop()
+          console.log( err)
         })
       },
       stop() {
@@ -218,7 +248,15 @@
       exportData () {
         this.$refs.deviceTable.exportCsv({
             filename: 'The original data',
-        });
+        })
+      },
+      insert_flg(str,flg,sn){
+        var newstr="";
+        for(var i=0;i<str.length;i+=sn){
+            var tmp=str.substring(i, i+sn);
+            newstr+=tmp+flg;
+        }
+        return newstr.slice(0, newstr.length - 1);
       }
     }
   }
@@ -252,5 +290,13 @@
     height: 10px;
     background-color: #FF0000;
     border-radius: 50%;
+  }
+  .demo-spin-icon-load{
+      animation: ani-demo-spin 1s linear infinite;
+  }
+  @keyframes ani-demo-spin {
+      from { transform: rotate(0deg);}
+      50%  { transform: rotate(180deg);}
+      to   { transform: rotate(360deg);}
   }
 </style>
