@@ -202,7 +202,7 @@
         })
         .then(() => { 
           return new Promise((resolve, reject) => {
-            setTimeout(() => {this.adcValid = false;reject(new Error('未找到设备mac地址'))},10000)
+            setTimeout(() => {this.adcValid = false;reject({code:0, message:'未找到设备mac地址'})},10000)
             this.instance.on('data', (err,res) => {
               let reg = /^&#\tmac=([0-9A-F]{12})\tadc=([0-9A-F]+)$/g
               let input = reg.exec(res)
@@ -212,7 +212,7 @@
                 testResult.ADC_value = this.adc
                 testResult.Mac = this.mac
                 if(this.findIndex(this.mac) > -1){
-                  reject(new Error('30S内已做过检测，请稍后再试'))
+                  reject({code:1,message:'30S内已做过检测，请稍后再试'})
                 }
                 if(this.adc >= 30000 && this.adc < 35000){
                   //adc合格更新UI
@@ -228,7 +228,7 @@
         })
         .then(() => {
           return new Promise((resolve, reject) => {
-            setTimeout(() => {this.bleValid = false;reject(new Error('未找到设备蓝牙信号'))},20000)
+            setTimeout(() => {this.bleValid = false;reject({code:2, message:'未找到设备蓝牙信号'})},20000)
             BluetoothAdapter.scan((record) => {
               console.log(record)
               testResult.signal = record.rssi
@@ -273,7 +273,21 @@
           console.log(this.qualified)
         })
         .catch(err => {
-          this.$Message.error(err.toString())
+          console.log(err)
+          if(err.code !== 1){
+            this.data2.push(testResult)
+            let arr = [
+              {
+                'ADC值': testResult.ADC_value,
+                'ADC合格': testResult.ADC_qualified,
+                'mac地址': testResult.Mac,
+                '信号强度': testResult.signal,
+                '信号合格': testResult.ADC_qualified,
+              }
+            ]
+            appendCSV(this.unPassPath,arr)
+          }
+          this.$Message.error(err.message)
           this.spin_loading = false
           this.stop()
           console.log( err)
@@ -333,6 +347,7 @@
         this.unPassPath = `${target.files[0].path}\\不合格.csv`
         appendCSV(this.passPath)
         appendCSV(this.unPassPath)
+        this.start()
       }
     }
   }

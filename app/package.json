@@ -13,6 +13,7 @@
     "axios": "^0.16.1",
     "bluebird": "^3.5.1",
     "date-utils": "^1.2.21",
+    "iconv-lite": "^0.4.19",
     "iview": "^2.5.1",
     "json2csv": "^3.11.5",
     "lodash": "^4.17.4",

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import json2csv from 'json2csv'
-
+import iconv from 'iconv-lite'
 const newLine = '\r\n'
 
 let fields = ['ADC值', 'ADC合格', 'mac地址', '信号强度', '信号合格']
@@ -14,14 +14,14 @@ function appendCSV (path, content) {
     if (err == null) {
       let csv = json2csv(toCsv) + newLine
 
-      fs.appendFile(path, csv, function (err) {
+      fs.appendFile(path, iconv.encode(csv, 'GBK'), function (err) {
         if (err) throw err
         console.log('The "data to append" was appended to file!')
       })
     } else {
       let headers = (fields + newLine)
 
-      fs.writeFile(path, headers, function (err, stat) {
+      fs.writeFile(path, iconv.encode(headers, 'GBK'), function (err, stat) {
         if (err) throw err
       })
     }
