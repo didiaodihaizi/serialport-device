@@ -14,6 +14,7 @@
     "bluebird": "^3.5.1",
     "date-utils": "^1.2.21",
     "iview": "^2.5.1",
+    "json2csv": "^3.11.5",
     "lodash": "^4.17.4",
     "noble": "^1.8.1",
     "serialport": "4.0.7",
