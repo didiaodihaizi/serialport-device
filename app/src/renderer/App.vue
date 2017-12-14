@@ -29,8 +29,10 @@
           <p slot="title" style="display: flex;">
             设备列表
             <span style="flex: 1;text-align: right;">
-              <Button type="success" @click="start">检测</Button>
-              <Dropdown @on-click="exportData">
+              <Button type="success" @click="start">检测
+                <input type="file" style="display:none" webkitdirectory directory v-on:change="handleChangePath">
+              </Button>
+              <!--<Dropdown @on-click="exportData">
                   <Button type="primary">
                       导出
                       <Icon type="arrow-down-b"></Icon>
@@ -38,7 +40,7 @@
                   <DropdownMenu slot="list">
                       <DropdownItem  v-for="item in export_type" :name = "item.value">{{ item.label }}</DropdownItem>
                   </DropdownMenu>
-              </Dropdown>
+              </Dropdown>-->
             </span>
           </p>
           <div style="position:relative">
@@ -63,6 +65,7 @@
   import fs from 'fs-extra'
   import path from 'path'
   import dateUtils from 'date-utils'
+  import appendCSV from 'renderer/utils/csv'
   
   export default {
     data() {
@@ -76,7 +79,10 @@
         rssi: 0,
         adcValid: false,
         bleValid: false,
+        hasPath: false,
         exportType: '',
+        passPath: '',
+        unPassPath: '',
         export_type: [
           {
             value: '1',
@@ -170,7 +176,12 @@
       findIndex(mac){
         return this.qualified.findIndex(ele => ele.mac === mac)
       },
-      start() {
+      start(e) {
+        if(!this.hasPath){
+          let target = e.currentTarget || e.target
+          target.children[0].children[0].click()
+          return
+        }
         let testResult = {
               ADC_value: '',
               ADC_qualified: '',
@@ -238,7 +249,21 @@
         })
         .then(() => {
           this.data2.push(testResult)
-
+          let arr = [
+            {
+              'ADC值': testResult.ADC_value,
+              'ADC合格': testResult.ADC_qualified,
+              'mac地址': testResult.Mac,
+              '信号强度': testResult.signal,
+              '信号合格': testResult.ADC_qualified,
+            }
+          ]
+          if(testResult.ADC_qualified === '合格' && testResult.ADC_qualified === '合格'){
+            appendCSV(this.passPath,arr)
+          }else{
+            appendCSV(this.unPassPath,arr)
+          }
+          
           this.stop()
           this.spin_loading = false
           this.qualified.push({
@@ -299,6 +324,15 @@
             newstr+=tmp+flg;
         }
         return newstr.slice(0, newstr.length - 1);
+      },
+      handleChangePath(e) {
+        let target = e.target
+        console.log(target.files[0].path)
+        this.hasPath = true
+        this.passPath = `${target.files[0].path}\\合格.csv`
+        this.unPassPath = `${target.files[0].path}\\不合格.csv`
+        appendCSV(this.passPath)
+        appendCSV(this.unPassPath)
       }
     }
   }
