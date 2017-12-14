@@ -31,7 +31,15 @@
             设备列表
             <span style="flex: 1;text-align: right;">
               <Button type="success" @click="start">检测</Button>
-              <Button type="info" @click="exportData">导出</Button>
+              <Dropdown @on-click="exportData">
+                  <Button type="primary">
+                      导出
+                      <Icon type="arrow-down-b"></Icon>
+                  </Button>
+                  <DropdownMenu slot="list">
+                      <DropdownItem  v-for="item in export_type" :name = "item.value">{{ item.label }}</DropdownItem>
+                  </DropdownMenu>
+              </Dropdown>
             </span>
           </p>
           <div style="position:relative">
@@ -42,8 +50,7 @@
                 <div>解析中</div>
             </Spin>
           </div>
-        </Card>
-        
+        </Card> 
       </Col>
     </Row>
   </div>
@@ -54,6 +61,8 @@
     AdvanproPiSerialport,
     BluetoothAdapter
   } from 'renderer/utils/proxy';
+  import fs from 'fs-extra'
+  import path from 'path'
   import dateUtils from 'date-utils'
   
   export default {
@@ -68,6 +77,21 @@
         rssi: 0,
         adcValid: false,
         bleValid: false,
+        exportType: '',
+        export_type: [
+          {
+            value: '1',
+            label: '合格'
+          },
+          {
+            value: '2',
+            label: '不合格'
+          },
+          {
+            value: '3',
+            label: '全部'
+          },
+        ],
         formItem: {
           port : '',
           baudRate: 115200,
@@ -160,7 +184,8 @@
               signal: '',
               signal_qualified: ''
           }
-          this.spin_loading = true
+        this.spin_loading = true
+        this.exportType = ''
         this.filters()
         AdvanproPiSerialport.create({
           path: this.formItem.port
@@ -218,6 +243,7 @@
         })
         .then(() => {
           this.data2.push(testResult)
+
           this.stop()
           this.spin_loading = false
           this.qualified.push({
@@ -245,15 +271,36 @@
           })
         }
       },
-      exportData () {
-        this.$refs.deviceTable.exportCsv({
-            filename: 'The original data',
-        })
+      exportData (type) {
+        console.log(type)
+        switch(type) {
+          case '1': 
+
+            this.$refs.deviceTable.exportCsv({
+                filename: '合格',
+                columns: this.columns1.filter((col, index) => index >= 0),
+                data: this.data2.filter((data, index) => data.ADC_qualified === '合格' && data.signal_qualified === '合格' )
+            })
+            break
+          case '2': 
+            this.$refs.deviceTable.exportCsv({
+                filename: '不合格',
+                columns: this.columns1.filter((col, index) => index >= 0),
+                data: this.data2.filter((data, index) => data.ADC_qualified === '不合格' && data.signal_qualified === '不合格')
+            })
+            break
+          case '3': 
+            this.$refs.deviceTable.exportCsv({
+                filename: '全部',
+            })
+            break
+        }
+        
       },
       insert_flg(str,flg,sn){
-        var newstr="";
-        for(var i=0;i<str.length;i+=sn){
-            var tmp=str.substring(i, i+sn);
+        let newstr="";
+        for(let i=0;i<str.length;i+=sn){
+            let tmp=str.substring(i, i+sn);
             newstr+=tmp+flg;
         }
         return newstr.slice(0, newstr.length - 1);
@@ -290,6 +337,21 @@
     height: 10px;
     background-color: #FF0000;
     border-radius: 50%;
+  }
+  .exportSelect {
+    position: absolute;
+    right: 120px;
+    width: 115px;
+    z-index: 1;
+    border: 1px solid #999;
+    padding: 10px 0;
+    li{
+      padding: 0 10px;
+      border-bottom: 1px solid #eee;
+    }
+    li:not-last-child{
+      border-bottom:none
+    }
   }
   .demo-spin-icon-load{
       animation: ani-demo-spin 1s linear infinite;
