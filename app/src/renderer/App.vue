@@ -13,9 +13,8 @@
                     </Select>
                   </FormItem>
                   <FormItem label="波特率">
-                    <Select v-model="formItem.baudRate" >
-                        <Option v-for="item in baudRate" :value="item.value" :key="item.value">{{ item.label }}</Option>
-                    </Select>
+                    <Input v-model="formItem.baudRate" >
+                    </Input>
                   </FormItem>
                 </div>
               </Form>
@@ -96,12 +95,7 @@
           port : '',
           baudRate: 115200,
         },
-        baudRate: [
-          {
-            value: 115200,
-            label: 115200
-          }
-        ],
+        baudRate: '',
         columns1: [
           {
               title: 'ADC值',
@@ -188,7 +182,8 @@
         this.exportType = ''
         this.filters()
         AdvanproPiSerialport.create({
-          path: this.formItem.port
+          path: this.formItem.port,
+          baudRate: this.formItem.baudRate
         })
         .then(instance => {
           this.instance = instance
