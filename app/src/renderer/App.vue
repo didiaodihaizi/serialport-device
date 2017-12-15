@@ -1,7 +1,7 @@
 <template>
   <div class="layout" style="overflow:auto">
-    <Row  class="fullheight" style="display: flex;">
-      <Col class=" fullheight">
+    <div  class="fullheight" style="display: flex;">
+      <div class=" fullheight">
         <div class="fullheight" style="padding-top: 10px;height: 100%;padding-left: 10px;">
           <Menu theme="light" active-name="1">
             <MenuGroup title="串口设置">
@@ -23,8 +23,8 @@
             </MenuGroup>
           </Menu>
         </div>
-      </Col>
-      <Col  class="right">
+      </div>
+      <div  class="right" >
         <Card :dis-hover="true">
           <p slot="title" style="display: flex;">
             设备列表
@@ -52,8 +52,8 @@
             </Spin>
           </div>
         </Card> 
-      </Col>
-    </Row>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -377,6 +377,7 @@
   }
   .right {
     padding:10px;
+    max-width: 85%;
     flex: 1;
   }
   .pass{
