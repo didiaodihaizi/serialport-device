@@ -27,7 +27,7 @@
       "provider": "generic",
       "url": "http://admin.dev.unifitapp.com/api/1.0/electron/${arch}/open_tools/"
     },
-    "productName": "sss",
+    "productName": "蓝牙串口检测工具",
     "appId": "com.electron.serialport-device",
     "electronVersion": "1.7.5",
     "dmg": {
@@ -62,7 +62,6 @@
       ]
     },
     "win": {
-      "icon": "build/icon.ico"
     },
     "linux": {
       "target": [

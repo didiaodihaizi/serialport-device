@@ -162,8 +162,11 @@
       searchPorts() {
         AdvanproPiSerialport.scan()
         .then(ports => {
-          this.port = ports
-          this.formItem.port = ports[0].comName
+          if(ports.length !== 0){
+            this.port = ports
+            this.formItem.port = ports[0].comName
+          }
+          
         })
       },
       filters(){
@@ -255,7 +258,7 @@
               'ADC合格': testResult.ADC_qualified,
               'mac地址': testResult.Mac,
               '信号强度': testResult.signal,
-              '信号合格': testResult.ADC_qualified,
+              '信号合格': testResult.signal_qualified,
             }
           ]
           if(testResult.ADC_qualified === '合格' && testResult.ADC_qualified === '合格'){

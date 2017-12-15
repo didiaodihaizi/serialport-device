@@ -1,7 +1,7 @@
 {
   "name": "serialport-device",
   "version": "1.0.0",
-  "productName": "sss",
+  "productName": "蓝牙串口检测工具",
   "description": "An electron-vue project",
   "main": "dist/main.js",
   "scripts": {
