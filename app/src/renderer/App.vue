@@ -1,7 +1,7 @@
 <template>
   <div class="layout" style="overflow:auto">
-    <Row type="flex" class="fullheight" style="display: flex;">
-      <Col  class=" fullheight">
+    <Row  class="fullheight" style="display: flex;">
+      <Col class=" fullheight">
         <div class="fullheight" style="padding-top: 10px;height: 100%;padding-left: 10px;">
           <Menu theme="light" active-name="1">
             <MenuGroup title="串口设置">
@@ -24,7 +24,7 @@
           </Menu>
         </div>
       </Col>
-      <Col span=20 class="right">
+      <Col  class="right">
         <Card :dis-hover="true">
           <p slot="title" style="display: flex;">
             设备列表
@@ -207,6 +207,7 @@
           return new Promise((resolve, reject) => {
             setTimeout(() => {this.adcValid = false;reject({code:0, message:'未找到设备mac地址'})},10000)
             this.instance.on('data', (err,res) => {
+              console.log(res)
               let reg = /^&#\tmac=([0-9A-F]{12})\tadc=([0-9A-F]+)$/g
               let input = reg.exec(res)
               if(input && input[1] && input[2]){
@@ -266,7 +267,6 @@
           }else{
             appendCSV(this.unPassPath,arr)
           }
-          
           this.stop()
           this.spin_loading = false
           this.qualified.push({
@@ -281,18 +281,24 @@
             this.data2.push(testResult)
             let arr = [
               {
-                'ADC值': testResult.ADC_value,
-                'ADC合格': testResult.ADC_qualified,
+                'ADC值': testResult.ADC_value ? testResult.ADC_value : 0,
+                'ADC合格': testResult.ADC_qualified ? testResult.ADC_qualified : '不合格',
                 'mac地址': testResult.Mac,
-                '信号强度': testResult.signal,
-                '信号合格': testResult.ADC_qualified,
+                '信号强度': testResult.signal ? testResult.signal : 0,
+                '信号合格': testResult.signal_qualified ? testResult.signal_qualified : '不合格',
               }
             ]
             appendCSV(this.unPassPath,arr)
           }
-          this.$Message.error(err.message)
+          console.log(err)
           this.spin_loading = false
           this.stop()
+          if(err.message){
+            this.$Message.error(err.message)
+          }else{
+            this.$Message.error('检测出错，请检查串口是否插好')
+          }
+          
           console.log( err)
         })
       },
