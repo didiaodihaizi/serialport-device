@@ -213,7 +213,7 @@
               if(input && input[1] && input[2]){
                 this.adc = parseInt(input[2], 16)
                 this.mac = this.insert_flg(input[1],':',2)
-                testResult.ADC_value = this.adc
+                testResult.ADC_value = this.adc.toString(16)
                 testResult.Mac = this.mac
                 if(this.findIndex(this.mac) > -1){
                   reject({code:1,message:'30S内已做过检测，请稍后再试'})
@@ -234,19 +234,19 @@
           return new Promise((resolve, reject) => {
             setTimeout(() => {this.bleValid = false;reject({code:2, message:'未找到设备蓝牙信号'})},20000)
             BluetoothAdapter.scan((record) => {
-              console.log(record)
               testResult.signal = record.rssi
               if(record.address.toUpperCase() === this.mac){
-                if(record.rssi >= -40){
+                if(parseInt(record.rssi) >= -40){
                   //合格更新UI
                    testResult.signal_qualified = '合格'
-                  console.log('蓝牙合格')
+                   resolve()
                 }else{
                   //不合格更新UI
                    testResult.signal_qualified = '不合格'
-                  console.log('蓝牙不合格')
+                   setTimeout(() => {
+                     resolve()
+                   }, 3000)
                 }
-                resolve()
               }
             })
           })
@@ -290,7 +290,6 @@
             ]
             appendCSV(this.unPassPath,arr)
           }
-          console.log(err)
           this.spin_loading = false
           this.stop()
           if(err.message){
